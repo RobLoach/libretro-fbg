@@ -1,0 +1,43 @@
+VENDOR_DIR := $(CORE_DIR)/../vendor
+LIBRETRO_COMM_DIR := $(VENDOR_DIR)/libretro-common
+
+INCFLAGS := \
+	-I$(LIBRETRO_COMM_DIR)/include \
+	-I$(CORE_DIR) \
+    -I$(VENDOR_DIR)
+
+ifneq (,$(findstring msvc2003,$(platform)))
+	INCFLAGS += -I$(LIBRETRO_COMM_DIR)/include/compat/msvc
+endif
+
+COREDEFINES = \
+	-D__LIBRETRO__ \
+	-DWITHOUT_PNG \
+    -DWITHOUT_JPEG
+
+SRC_DIRS := \
+	$(CORE_DIR) \
+    $(VENDOR_DIR)/fbg/src
+
+SOURCES_C := $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.c))
+
+#SOURCES_C += \
+#	$(CORE_DIR)/drivers/libretro/libretro.c
+
+ifneq ($(STATIC_LINKING), 1)
+#	SOURCES_C += \
+#		$(LIBRETRO_COMM_DIR)/compat/compat_posix_string.c \
+#		$(LIBRETRO_COMM_DIR)/compat/compat_snprintf.c \
+#		$(LIBRETRO_COMM_DIR)/compat/compat_strcasestr.c \
+#		$(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
+#		$(LIBRETRO_COMM_DIR)/compat/fopen_utf8.c \
+#		$(LIBRETRO_COMM_DIR)/encodings/encoding_utf.c \
+#		$(LIBRETRO_COMM_DIR)/file/file_path.c \
+#		$(LIBRETRO_COMM_DIR)/file/file_path_io.c \
+#		$(LIBRETRO_COMM_DIR)/streams/file_stream.c \
+#		$(LIBRETRO_COMM_DIR)/streams/file_stream_transforms.c \
+#		$(LIBRETRO_COMM_DIR)/streams/memory_stream.c \
+#		$(LIBRETRO_COMM_DIR)/string/stdstring.c \
+#		$(LIBRETRO_COMM_DIR)/time/rtime.c \
+#		$(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c
+endif

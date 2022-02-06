@@ -1,0 +1,7 @@
+[submodule "vendor/fbg"]
+	path = vendor/fbg
+	url = https://github.com/grz0zrg/fbg.git
+	ignore = dirty
+[submodule "vendor/libretro-common"]
+	path = vendor/libretro-common
+	url = https://github.com/libretro/libretro-common.git
