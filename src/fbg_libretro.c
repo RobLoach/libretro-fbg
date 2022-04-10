@@ -22,6 +22,7 @@ struct fbg_core
 {
 	bool quit;
 	struct _fbg* fbg;
+	struct _fbg_font* default_font;
 };
 static struct fbg_core* core;
 
@@ -119,7 +120,7 @@ RETRO_API void retro_get_system_av_info(struct retro_system_av_info *info)
 		.base_height  = 480,
 		.max_width    = 640,
 		.max_height   = 480,
-		.aspect_ratio = (float)640 / (float)480,
+		.aspect_ratio = 640.0f / 480.0f,
 	};
 }
 
@@ -266,9 +267,13 @@ void fbg_libretro_update(struct fbg_core* game)
  */
 void fbg_libretro_draw(struct _fbg* fbg)
 {
-    //video_cb(game->screen, TIC80_FULLWIDTH, TIC80_FULLHEIGHT, TIC80_FULLWIDTH << 2);
-
+	// TODO: The R and B bits are flipped from RGBA
+	// FBG uses RGBA. Offset it to match libretro's ARGB.
+	//RBGA8888
 	video_cb(fbg->disp_buffer, fbg->width, fbg->height, fbg->width << 2);
+
+	//video_cb(fbg->disp_buffer, fbg->width, fbg->height, fbg->width << 2);
+	//video_cb(fbg->disp_buffer, fbg->width, fbg->height, fbg->width * sizeof(char) * 3);
 }
 
 /**
@@ -311,9 +316,22 @@ RETRO_API void retro_run(void)
 
 	if (core->fbg) {
 
-		fbg_rect(core->fbg, 0, 0, 640, 480, 255, 0, 0);
+		// Red box
+		fbg_rect(core->fbg, 10, 10, 100, 100, 255, 0, 0);
+		fbg_rect(core->fbg, 300, 10, 100, 100, 0, 255, 0);
+		fbg_rect(core->fbg, 500, 10, 100, 100, 0, 0, 255);
+		fbg_rect(core->fbg, 10, 200, 100, 100, 255, 255, 255);
 
-		fbg_libretro_draw(core->fbg);
+		// Green Line
+		fbg_line(core->fbg, 70, 100, 300, 400, 0, 255, 0);
+
+		// White Hello World
+		//fbg_text(core->fbg, core->default_font, "Hello World", 20, 50, 255, 255, 255);
+		fbg_write(core->fbg, "Hello World!", 50, 50);
+
+		// Flip the backbuffer and render to screen
+		fbg_flip(core->fbg);
+		fbg_draw(core->fbg);
 	}
 }
 
@@ -334,6 +352,12 @@ RETRO_API bool retro_load_game(const struct retro_game_info *info)
 		return false;
 	}
 
+	// enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_RGB565;
+	// if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt)) {
+	// 	log_cb(RETRO_LOG_ERROR, "RETRO_PIXEL_FORMAT_RGB565 is not supported.\n");
+	// 	return false;
+	// }
+
 	// Check for the content.
 	/*
 	if (info == NULL) {
@@ -347,8 +371,15 @@ RETRO_API bool retro_load_game(const struct retro_game_info *info)
 		return false;
 	}
 	*/
+	core->fbg = fbg_customSetup(640, 480, 4, 1, 0, core, fbg_libretro_draw, NULL, NULL, NULL);
+	core->fbg->bgr = 1;
 
-	core->fbg = fbg_customSetup(640, 480, 4, 1, 0, core, NULL, NULL, NULL, NULL);
+	struct _fbg_img* fontImage = fbg_loadImage(core->fbg, "vendor/fbg/examples/bbmode1_8x8.png");
+	core->default_font = fbg_createFont(core->fbg, fontImage, 8, 8, 33);
+
+	fbg_textColor(core->fbg, 255, 0, 255);
+	fbg_textColorKey(core->fbg, 0);
+	fbg_textFont(core->fbg, core->default_font);
 
 	// Set up the input descriptors.
 	fbg_libretro_input_descriptors();
@@ -365,6 +396,8 @@ RETRO_API bool retro_load_game(const struct retro_game_info *info)
 RETRO_API void retro_unload_game(void)
 {
 	if (core->fbg) {
+		fbg_freeImage(core->default_font->bitmap);
+		fbg_freeFont(core->default_font);
 		fbg_close(core->fbg);
 		core->fbg = NULL;
 	}
@@ -440,5 +473,5 @@ RETRO_API void retro_cheat_reset(void)
  */
 RETRO_API void retro_cheat_set(unsigned index, bool enabled, const char *code)
 {
-    
+    // Nothing
 }
